@@ -1,0 +1,188 @@
+﻿<!DOCTYPE html>
+<html>
+  <head>
+    <title>Arkanoid js por Sergio Caballero</title>
+    <meta charset="UTF-8">
+    <script type="text/javascript" src="http://dl.dropbox.com/u/60244466/yop/processing-1.3.6.min.js"></script>
+  </head>
+
+    <script type="text/processing" data-processing-target="mysketch">
+int[][] celda;
+color[] bloques;
+int columnas=13, filas=23, ancho=45, alto=15, bolaRadio=5, bolaX=ancho*columnas/2, bolaY=alto*19, nave=bolaX-ancho/2, bolaXX=0, bolaYY=2, velocidad=2, vidas=3, puntaje, restantes, nivel=1;
+boolean colision, direccion;
+String[] mapa;
+void setup() {
+  mapa = new String[4];
+  mapa[0]="000000000000000000111000000000001000000011110101111001111010111101000000000000101101110110111010111010111100000000011001111111100000111111111000111001001110001101110110000000111000000000000000000000000000000000000000000000000000000000";
+  mapa[1]="000000000000001000222000100110022200110011112221111001111111111100100022200010001101110110040010111010041100011100011001111111110000111111111000011011101100001101110110000000111000000000000000000000000000000000000000000000000000000000";
+  mapa[2]="000000000000000100000001001111100011111011100000111000100000001000000001000000000011211000000001232100000001233321000000112321100000001121100000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000";
+  mapa[3]="000000000000000111111111000011111111100001111111110000000000000000011111111100001111111110000111111111000000000000000000002220000000022222220000011111111100001111111110000111111111000000000000000000000000000000000000000000000000000000";
+  direccion=boolean(int(random(2))-1);
+  size(ancho*columnas, alto*filas);
+  frameRate(60);
+  bloques = new color[5];
+  bloques[0] = (#000000);
+  bloques[1] = (#22EE22);
+  bloques[2] = (#DDDD00);
+  bloques[3] = (#FF2222);
+  bloques[4] = (#AAAAAA);
+  celda = new int [columnas][filas];
+  for (int x=0; x<columnas; x++) {
+    for (int y=0; y<18; y++) {
+      celda[x][y]=int(mapa[0].charAt(x+y*columnas));
+      if (int(mapa[0].charAt(x+y*columnas))>0) {
+        restantes++;
+      }
+    }
+  }
+}
+
+void draw() {
+  println("Vidas="+vidas+"  Puntaje:"+puntaje+"  Nivel:"+nivel);
+  if (restantes == 0) {
+    nivel++;
+    nivel = nivel%4;
+    for (int x = 0; x < columnas; x++) {
+      for (int y = 0; y < 18; y++) {
+        celda[x][y] = int(mapa[nivel-1].charAt(x+y*columnas));
+        if (celda[x][y] != 0 && celda[x][y] != 4) {
+          restantes++;
+        }
+      }
+    }
+    bolaX=ancho*columnas/2;
+    bolaY=alto*19;
+    nave=bolaX-ancho/2;
+    bolaXX=0;
+    bolaYY=2;
+  }
+  if (mousePressed) {
+    if (nave-ancho/2 < mouseX) {
+    }
+    if (nave+ancho/2 > mouseX) {
+    }
+    nave=mouseX-ancho/2;
+    if (mouseX<ancho/2) {
+      nave=0;
+    }
+    if (mouseX>ancho*columnas-ancho/2) {
+      nave=ancho*columnas-ancho;
+    }
+    direccion=boolean(int(random(2))-1);
+  }
+  if (keyPressed) {
+    if (key == CODED) {
+      if (keyCode == RIGHT) {
+        if (nave < ancho*columnas-ancho) {
+          nave+=10;
+          direccion=true;
+        }
+      }
+      if (keyCode == LEFT) {
+        if (nave > 0) {
+          nave-=10;
+          direccion=false;
+        }
+      }
+    }
+  }
+  for (int x = 0; x < columnas; x++) {
+    for (int y = 0; y < filas; y++) {
+      fill(bloques[celda[x][y]]);
+      rect(x*ancho, y*alto, ancho, alto);
+    }
+  }
+  fill(150);
+  rect(nave, alto*21, ancho, alto);
+  if (vidas>0) {
+    fill(255);
+    ellipse(bolaX, bolaY, bolaRadio*2, bolaRadio*2);
+    bolaX += bolaXX*velocidad;
+    bolaY += bolaYY*velocidad;
+    if ((bolaX+bolaRadio >= nave && bolaX-bolaRadio <= nave+ancho) && (bolaY+bolaRadio >= 21*alto && bolaY-bolaRadio <= 22*alto)) {
+      if (bolaXX < 2 && direccion == true) {
+        bolaXX++;
+      }
+      if (bolaXX > -2 && direccion == false) {
+        bolaXX--;
+      } 
+      if (bolaXX == 0) {
+        bolaYY =-2;
+      }
+      if (bolaXX == 1 || bolaXX == -1) {
+        bolaYY =-2;
+      }
+      if (bolaXX == 2 || bolaXX == -2) {
+        bolaYY =-1;
+      }
+    }
+    colision = false;
+    if (bolaX+bolaRadio >= ancho*columnas) {
+      bolaXX = -abs(bolaXX);
+      colision = true;
+    }
+    if (bolaX-bolaRadio <= 0) {
+      bolaXX = abs(bolaXX);
+      colision = true;
+    }
+    if (bolaY+bolaRadio >= alto*filas) {
+      bolaYY = -abs(bolaYY);
+      colision = true;
+      vidas--;
+    }
+    if (bolaY-bolaRadio <= 0) {
+      bolaYY = abs(bolaYY);
+      colision = true;
+    }
+    if (colision == false && celda[int((bolaX-bolaRadio)/ancho)][int(bolaY/alto)] > 0) {
+      if (celda[int((bolaX-bolaRadio)/ancho)][int(bolaY/alto)] < 4) {
+        celda[int((bolaX-bolaRadio)/ancho)][int(bolaY/alto)]--;
+      }
+      if (celda[int((bolaX-bolaRadio)/ancho)][int(bolaY/alto)] == 0) {
+        restantes--;
+        puntaje++;
+      }
+      bolaXX = abs(bolaXX);
+      colision = true;
+    }
+    if (colision == false && celda[int((bolaX+bolaRadio-1)/ancho)][int(bolaY/alto)] > 0) {
+      if (celda[int((bolaX+bolaRadio-1)/ancho)][int(bolaY/alto)] < 4) {
+        celda[int((bolaX+bolaRadio-1)/ancho)][int(bolaY/alto)]--;
+      }
+      if (celda[int((bolaX+bolaRadio-1)/ancho)][int(bolaY/alto)] == 0) {
+        restantes--;
+        puntaje++;
+      }
+      bolaXX = -abs(bolaXX);
+      colision = true;
+    }
+    if (colision == false && celda[int(bolaX/ancho)][int((bolaY-bolaRadio)/alto)] > 0) {
+      if (celda[int(bolaX/ancho)][int((bolaY-bolaRadio)/alto)] < 4) {
+        celda[int(bolaX/ancho)][int((bolaY-bolaRadio)/alto)]--;
+      }
+      if (celda[int(bolaX/ancho)][int((bolaY-bolaRadio)/alto)] == 0) {
+        restantes--;
+        puntaje++;
+      }
+      bolaYY = abs(bolaYY);
+      colision = true;
+    }
+    if (colision == false && celda[int(bolaX/ancho)][int((bolaY+bolaRadio-1)/alto)] > 0) {
+      if (celda[int(bolaX/ancho)][int((bolaY+bolaRadio-1)/alto)] < 4) {
+        celda[int(bolaX/ancho)][int((bolaY+bolaRadio-1)/alto)]--;
+      }
+      if (celda[int(bolaX/ancho)][int((bolaY+bolaRadio-1)/alto)] == 0) {
+        restantes--;
+        puntaje++;
+      }
+      bolaYY = -abs(bolaYY);
+      colision = true;
+    }
+  }
+}
+    </script>
+    <canvas id="mysketch"></canvas>
+
+  </body>
+</html>
